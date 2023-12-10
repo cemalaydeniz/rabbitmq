@@ -87,6 +87,31 @@ void SendAnnouncement(string message)
         Console.WriteLine("The announcement has been sent");
     }
 }
+
+void SendReport(Report report)
+{
+    using (IModel channel = connection.CreateModel())
+    {
+        channel.ExchangeDeclare("Report", ExchangeType.Direct, true);
+
+        /**
+         * Uncomment it in order to receive the messages that are sent before any consumer is created
+         */
+        //channel.QueueDeclare("ReportQueue", true, false, false);
+        //channel.QueueBind("ReportQueue", "Report", "admin");
+
+        string json = JsonSerializer.Serialize(report);
+        byte[] package = Encoding.UTF8.GetBytes(json);
+
+        IBasicProperties properties = channel.CreateBasicProperties();
+        properties.Persistent = true;
+
+        channel.BasicPublish("Report", "admin", properties, package);
+        // ... There could be more different report types to send
+
+        Console.WriteLine("The report has been sent");
+    }
+}
 //~ End
 
 
@@ -102,5 +127,17 @@ OnSoldProduct(new Order()
 OnRefundedProduct(Guid.NewGuid().ToString());
 
 SendAnnouncement("20% off for all products");
+
+SendReport(new Report()
+{
+    Items = new List<Report.Item>()
+    {
+        new Report.Item() { ProductId = Guid.NewGuid().ToString(), Quantity = new Random().Next(1, 11) },
+        new Report.Item() { ProductId = Guid.NewGuid().ToString(), Quantity = new Random().Next(1, 11) },
+        new Report.Item() { ProductId = Guid.NewGuid().ToString(), Quantity = new Random().Next(1, 11) },
+        new Report.Item() { ProductId = Guid.NewGuid().ToString(), Quantity = new Random().Next(1, 11) },
+        new Report.Item() { ProductId = Guid.NewGuid().ToString(), Quantity = new Random().Next(1, 11) }
+    }
+});
 
 Console.ReadKey();
