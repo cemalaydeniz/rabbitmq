@@ -64,6 +64,29 @@ void OnRefundedProduct(string orderId)
         Console.WriteLine("The refunded product message has been sent");
     }
 }
+
+void SendAnnouncement(string message)
+{
+    using (IModel channel = connection.CreateModel())
+    {
+        channel.ExchangeDeclare("Announcement", ExchangeType.Fanout, true);
+
+        /**
+         * Uncomment it in order to receive the messages that are sent before any consumer is created
+         */
+        //channel.QueueDeclare("AnnouncementQueue", true, false, false);
+        //channel.QueueBind("AnnouncementQueue", "Announcement", string.Empty);
+
+        byte[] package = Encoding.UTF8.GetBytes(message);
+
+        IBasicProperties properties = channel.CreateBasicProperties();
+        properties.Persistent = true;
+
+        channel.BasicPublish("Announcement", string.Empty, properties, package);
+
+        Console.WriteLine("The announcement has been sent");
+    }
+}
 //~ End
 
 
@@ -77,5 +100,7 @@ OnSoldProduct(new Order()
 });
 
 OnRefundedProduct(Guid.NewGuid().ToString());
+
+SendAnnouncement("20% off for all products");
 
 Console.ReadKey();
